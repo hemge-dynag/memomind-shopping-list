@@ -51,13 +51,26 @@ typedef struct {
     uint16_t visible_count;
     uint16_t selected_index;
     int32_t row_height;
-    uint8_t language; /* 0 = French (default), 1 = English */
+    uint8_t language; /* 0=fr 1=en 2=es 3=it 4=de 5=zh-CN */
 } shopping_list_t;
 
-/* Picks the French or English string depending on the detected UI locale. */
-#define L(fr_str, en_str) (sl.language != 0U ? (en_str) : (fr_str))
+/* Picks the string for the detected UI locale. */
+#define L(fr_str, en_str, es_str, it_str, de_str, zh_str) \
+    (sl.language == 1U ? (en_str) : sl.language == 2U ? (es_str) : \
+     sl.language == 3U ? (it_str) : sl.language == 4U ? (de_str) : \
+     sl.language == 5U ? (zh_str) : (fr_str))
 
 static shopping_list_t sl;
+
+static uint8_t shopping_list_detect_language(const char *locale)
+{
+    if (locale[0] == 'e' && locale[1] == 'n') return 1U;
+    if (locale[0] == 'e' && locale[1] == 's') return 2U;
+    if (locale[0] == 'i' && locale[1] == 't') return 3U;
+    if (locale[0] == 'd' && locale[1] == 'e') return 4U;
+    if (locale[0] == 'z' && locale[1] == 'h') return 5U;
+    return 0U;
+}
 
 #define number gm_plugin_lvgl_style_number
 #define color gm_plugin_lvgl_style_color
@@ -175,7 +188,7 @@ static void refresh_list_display(void)
         for (slot = 0U; slot < VISIBLE_ROWS; slot++)
             sl.ui->label_set_text(sl.row_label[slot], "");
         sl.ui->label_set_text(sl.hint_label,
-            L("En attente du telephone...", "Waiting for the phone..."));
+            L("En attente du telephone...", "Waiting for the phone...", "Esperando al teléfono...", "In attesa del telefono...", "Warte auf das Telefon...", "正在等待手机..."));
         return;
     }
 
@@ -183,7 +196,7 @@ static void refresh_list_display(void)
         for (slot = 0U; slot < VISIBLE_ROWS; slot++)
             sl.ui->label_set_text(sl.row_label[slot], "");
         sl.ui->label_set_text(sl.hint_label,
-            L("Liste terminee !", "All done!"));
+            L("Liste terminee !", "All done!", "¡Lista completada!", "Lista completata!", "Liste fertig!", "清单完成！"));
         return;
     }
 
@@ -195,7 +208,11 @@ static void refresh_list_display(void)
     }
     sl.ui->label_set_text(sl.hint_label,
         L("Tete haut/bas: deplacer   Bouton: cocher",
-          "Head up/down: move   Button: check"));
+          "Head up/down: move   Button: check",
+          "Cabeza arriba/abajo: mover   Botón: marcar",
+          "Testa su/giù: muovi   Pulsante: spunta",
+          "Kopf hoch/runter: bewegen   Taste: abhaken",
+          "抬头/低头：移动   按钮：勾选"));
 }
 
 static void move_selection(int32_t delta)
@@ -245,9 +262,8 @@ static gm_plugin_result_t shopping_list_start(void *context)
 
     sl.language = 0U;
     if (sl.host->locale_get != 0 &&
-        sl.host->locale_get(locale) == GM_PLUGIN_OK &&
-        locale[0] == 'e' && locale[1] == 'n')
-        sl.language = 1U;
+        sl.host->locale_get(locale) == GM_PLUGIN_OK)
+        sl.language = shopping_list_detect_language(locale);
 
     if (sl.host->display_get_info(&display) != GM_PLUGIN_OK ||
         display.width <= SCREEN_MARGIN * 2U)

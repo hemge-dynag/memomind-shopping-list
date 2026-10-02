@@ -7,6 +7,9 @@ import {
   encodeSessionEnd,
   encodeSetList,
 } from './protocol.js';
+import { detectLocale, getStrings } from './translations.js';
+
+const S = getStrings(detectLocale());
 
 const STORAGE_KEY = 'items';
 
@@ -35,6 +38,18 @@ function setStatus(text, state = '') {
   statusEl.className = `status ${state}`.trim();
 }
 
+function applyStrings() {
+  document.documentElement.lang = detectLocale();
+  document.querySelector('#app-title').textContent = S.appTitle;
+  startButton.textContent = S.startShopping;
+  itemInput.placeholder = S.itemPlaceholder;
+  document.querySelector('#add-item-button').textContent = S.add;
+  document.querySelector('#item-count-label').textContent = S.itemCount(0).replace(/^0\s*/, '');
+  document.querySelector('#glasses-hint').textContent = S.glassesHint;
+  stopButton.textContent = S.stopShopping;
+  setStatus(S.statusStarting);
+}
+
 async function loadItems() {
   const result = await gm.storage.get(STORAGE_KEY);
   if (result.value) {
@@ -42,8 +57,8 @@ async function loadItems() {
     return;
   }
   items = [
-    { id: makeItemId(), text: 'Lait', checked: false },
-    { id: makeItemId(), text: 'Pain', checked: false },
+    { id: makeItemId(), text: S.seedItem1, checked: false },
+    { id: makeItemId(), text: S.seedItem2, checked: false },
   ];
   await persistItems();
 }
@@ -72,7 +87,7 @@ function renderList() {
         <input type="checkbox" class="item-checkbox" data-id="${item.id}" ${item.checked ? 'checked' : ''}>
         <span class="item-text${item.checked ? ' checked' : ''}">${escapeHtml(item.text)}</span>
       </label>
-      <button class="delete-item" data-id="${item.id}" aria-label="Supprimer">✕</button>
+      <button class="delete-item" data-id="${item.id}" aria-label="${S.deleteAria}">✕</button>
     `;
     itemListEl.appendChild(row);
   }
@@ -166,14 +181,15 @@ async function start() {
   try {
     await gm.ready();
     await loadItems();
+    applyStrings();
     const info = await gm.device.getInfo();
     connected = Boolean(info.connected);
-    setStatus(connected ? 'Lunettes connectées' : 'Lunettes déconnectées', connected ? 'ready' : 'error');
+    setStatus(connected ? S.statusConnected : S.statusDisconnected, connected ? 'ready' : 'error');
     renderList();
     await gm.device.subscribeEvents(['connection']);
     gm.device.onConnection((event) => {
       connected = Boolean(event.connected);
-      setStatus(connected ? 'Lunettes connectées' : 'Lunettes déconnectées', connected ? 'ready' : 'error');
+      setStatus(connected ? S.statusConnected : S.statusDisconnected, connected ? 'ready' : 'error');
       if (!connected && sessionActive) void stopShopping();
       renderList();
     });
