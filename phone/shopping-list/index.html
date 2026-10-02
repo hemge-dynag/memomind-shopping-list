@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+    <meta name="theme-color" content="#0b0e14">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+    <title>GM Shopping List</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>Liste de courses</h1>
+      <span id="status" class="status">Démarrage…</span>
+    </header>
+
+    <main>
+      <section id="setup-section" class="review-cta">
+        <button id="start-shopping" disabled>Démarrer les courses</button>
+        <p><span id="item-count">0</span> article(s) à acheter</p>
+      </section>
+
+      <form id="add-item-form" class="add-item-form">
+        <input id="item-input" type="text" maxlength="150" placeholder="Nom de l'article" required>
+        <button type="submit" id="add-item-button">Ajouter</button>
+      </form>
+
+      <section id="shopping-section" hidden>
+        <p id="glasses-hint" class="hint">Sur les lunettes : tête haut/bas = élément précédent/suivant, bouton = cocher/décocher l'élément sélectionné.</p>
+        <button id="stop-shopping" class="stop-review">Arrêter les courses</button>
+      </section>
+
+      <ul id="item-list" class="item-list"></ul>
+    </main>
+
+    <script type="module" src="plugin.js"></script>
+  </body>
+</html>
